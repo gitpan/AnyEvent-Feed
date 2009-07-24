@@ -5,11 +5,12 @@ no warnings;
 use Carp qw/croak/;
 use Encode;
 use XML::Feed;
+use MIME::Base64;
 use AnyEvent::HTTP;
 use Digest::SHA1 qw/sha1_base64/;
 use Scalar::Util qw/weaken/;
 
-our $VERSION = '0.1';
+our $VERSION = '0.2';
 
 =head1 NAME
 
@@ -17,7 +18,7 @@ AnyEvent::Feed - Receiving RSS/Atom Feed reader with XML::Feed
 
 =head1 VERSION
 
-Version 0.1
+Version 0.2
 
 =head1 SYNOPSIS
 
@@ -90,6 +91,21 @@ If this is set you also have to specify the C<on_fetch> callback (see below).
 It will try to fetch the C<$url> every C<$seconds> seconds and call the
 callback given by C<on_fetch> with the result.
 
+=item headers => $http_hdrs
+
+Additional HTTP headers for each GET request can be passed in the C<$http_hdrs>
+hash reference, just like you would pass it to the C<headers> argument of
+the C<http_get> request of L<AnyEvent::HTTP>.
+
+=item username => $http_user
+
+=item password => $http_pass
+
+These are the HTTP username and password that will be used for Basic HTTP
+Authentication with the HTTP server when fetching the feed. This is mostly
+sugar for you so you don't have to encode them yourself and pass them to the
+C<headers> argument above.
+
 =item on_fetch => $cb->($feed_reader, $new_entries, $feed_obj, $error)
 
 This callback is called if the C<interval> parameter is given (see above)
@@ -133,6 +149,7 @@ sub new {
             my ($self, $e, $f, $err) = @_;
 
             $self->{on_fetch}->($self, $e, $f, $err);
+
             $self->{timer} =
                AnyEvent->timer (
                   after => $self->{interval}, cb => $self->{timer_cb});
@@ -227,10 +244,26 @@ and the L<XML::Feed::Entry> object of that entry.  C<$feed_obj> is the
 L<XML::Feed> feed object used to parse the fetched feed and contains all
 entries (and not just the 'new' ones).
 
-What a 'new' entry is, is decided by a map of hashes as described in the C<entry_ages>
-method's documentation above.
+What a 'new' entry is, is decided by a map of hashes as described in the
+C<entry_ages> method's documentation above.
 
 =cut
+
+sub _get_headers {
+   my ($self, %hdrs) = @_;
+
+   my %hdrs = %{$self->{headers} || {}};
+
+   if (defined $self->{last_mod}) {
+      $hdrs{'If-Modified-Since'} = $self->{last_mod};
+   }
+
+   $hdrs{Authorization} =
+     "Basic " . encode_base64 (join ':', $self->{username}, $self->{password})
+        if defined $self->{username};
+
+   \%hdrs
+}
 
 sub fetch {
    my ($self, $cb) = @_;
@@ -239,8 +272,12 @@ sub fetch {
       croak "no callback given to fetch!";
    }
 
-   http_get $self->{url}, sub {
+   http_get $self->{url}, headers => $self->_get_headers, sub {
       my ($data, $hdr) = @_;
+
+      #d# warn "HEADERS ($self->{last_mod}): "
+      #d#    . (join ",\n", map { "$_:\t$hdr->{$_}" } keys %$hdr)
+      #d#    . "\n";
 
       if ($hdr->{Status} =~ /^2/) {
          my $feed;
@@ -253,7 +290,14 @@ sub fetch {
             $cb->($self, undef, undef, XML::Feed->errstr);
          } else {
             $cb->($self, $self->_new_entries, $self->{feed});
+
+            $self->{last_mod} = $hdr->{'last-modified'};
          }
+
+      } elsif (defined ($self->{last_mod}) && $hdr->{Status} eq '304') {
+         # do nothing, everything was/is fine!
+         $cb->($self, [], $self->{feed});
+
       } else {
          $cb->($self, undef, undef, "$hdr->{Status} $hdr->{Reason}");
       }
@@ -275,6 +319,22 @@ L<AnyEvent::HTTP>
 L<AnyEvent>
 
 =head1 BUGS
+
+=head2 Known Bugs
+
+There is actually a known bug with encodings of contents of Atom feeds.
+L<XML::Atom> by default gives you UTF-8 encoded data. You have to set
+this global variable to be able to use the L<XML::Feed::Entry> interface
+without knowledge of the underlying feed type:
+
+   $XML::Atom::ForceUnicode = 1;
+
+I've re-reported this bug against L<XML::Feed>, as I think it should
+take care of this. L<XML::Atom> should probably just fix it's Unicode
+interface, but it seems to be a bit deserted w.r.t. fixing the bugs in
+the tracker.
+
+=head2 Contact
 
 Please report any bugs or feature requests to
 C<bug-anyevent-feed at rt.cpan.org>, or through the web interface at

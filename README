@@ -2,7 +2,7 @@ NAME
     AnyEvent::Feed - Receiving RSS/Atom Feed reader with XML::Feed
 
 VERSION
-    Version 0.1
+    Version 0.2
 
 SYNOPSIS
        use AnyEvent;
@@ -68,6 +68,19 @@ METHODS
             seconds and call the callback given by "on_fetch" with the
             result.
 
+        headers => $http_hdrs
+            Additional HTTP headers for each GET request can be passed in
+            the $http_hdrs hash reference, just like you would pass it to
+            the "headers" argument of the "http_get" request of
+            AnyEvent::HTTP.
+
+        username => $http_user
+        password => $http_pass
+            These are the HTTP username and password that will be used for
+            Basic HTTP Authentication with the HTTP server when fetching the
+            feed. This is mostly sugar for you so you don't have to encode
+            them yourself and pass them to the "headers" argument above.
+
         on_fetch => $cb->($feed_reader, $new_entries, $feed_obj, $error)
             This callback is called if the "interval" parameter is given
             (see above) with the same arguments as the callback given to the
@@ -122,6 +135,19 @@ SEE ALSO
     AnyEvent
 
 BUGS
+  Known Bugs
+    There is actually a known bug with encodings of contents of Atom feeds.
+    XML::Atom by default gives you UTF-8 encoded data. You have to set this
+    global variable to be able to use the XML::Feed::Entry interface without
+    knowledge of the underlying feed type:
+
+       $XML::Atom::ForceUnicode = 1;
+
+    I've re-reported this bug against XML::Feed, as I think it should take
+    care of this. XML::Atom should probably just fix it's Unicode interface,
+    but it seems to be a bit deserted w.r.t. fixing the bugs in the tracker.
+
+  Contact
     Please report any bugs or feature requests to "bug-anyevent-feed at
     rt.cpan.org", or through the web interface at
     <http://rt.cpan.org/NoAuth/ReportBug.html?Queue=AnyEvent-Feed>. I will

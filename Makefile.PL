@@ -13,6 +13,7 @@ WriteMakefile(
     PREREQ_PM => {
         'Test::More'     => 0,
         'AnyEvent'       => 3.5,
+        'MIME::Base64'   => 0,
         'AnyEvent::HTTP' => 0,
         'Digest::SHA1'   => 0,
         'Scalar::Util'   => 0,

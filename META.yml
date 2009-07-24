@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               AnyEvent-Feed
-version:            0.1
+version:            0.2
 abstract:           Receiving RSS/Atom Feed reader with XML::Feed
 author:
     - Robin Redeker <elmex@x-paste.de>
@@ -13,6 +13,7 @@ requires:
     AnyEvent::HTTP:  0
     Digest::SHA1:    0
     Encode:          0
+    MIME::Base64:    0
     Scalar::Util:    0
     Test::More:      0
     XML::Feed:       0
