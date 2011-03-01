@@ -10,7 +10,7 @@ use AnyEvent::HTTP;
 use Digest::SHA1 qw/sha1_base64/;
 use Scalar::Util qw/weaken/;
 
-our $VERSION = '0.2';
+our $VERSION = '0.3';
 
 =head1 NAME
 
@@ -18,7 +18,7 @@ AnyEvent::Feed - Receiving RSS/Atom Feed reader with XML::Feed
 
 =head1 VERSION
 
-Version 0.2
+Version 0.3
 
 =head1 SYNOPSIS
 
@@ -41,7 +41,7 @@ Version 0.2
       # $feed is the XML::Feed object belonging to that fetch.
 
       for (@$new_entries) {
-         my ($hash, $entry) = @_;
+         my ($hash, $entry) = @$_;
          # $hash a unique hash describing the $entry
          # $entry is the XML::Feed::Entry object of the new entries
          # since the last fetch.
@@ -259,7 +259,7 @@ sub _get_headers {
    }
 
    $hdrs{Authorization} =
-     "Basic " . encode_base64 (join ':', $self->{username}, $self->{password})
+     "Basic " . encode_base64 (join ':', $self->{username}, $self->{password}, '')
         if defined $self->{username};
 
    \%hdrs

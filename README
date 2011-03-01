@@ -2,7 +2,7 @@ NAME
     AnyEvent::Feed - Receiving RSS/Atom Feed reader with XML::Feed
 
 VERSION
-    Version 0.2
+    Version 0.3
 
 SYNOPSIS
        use AnyEvent;
@@ -24,7 +24,7 @@ SYNOPSIS
           # $feed is the XML::Feed object belonging to that fetch.
 
           for (@$new_entries) {
-             my ($hash, $entry) = @_;
+             my ($hash, $entry) = @$_;
              # $hash a unique hash describing the $entry
              # $entry is the XML::Feed::Entry object of the new entries
              # since the last fetch.

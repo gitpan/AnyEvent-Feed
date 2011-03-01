@@ -1,5 +1,10 @@
 Revision history for AnyEvent::Feed
 
+0.3     Tue Mar  1 07:53:57 CET 2011
+        - fixed typo in the synopsis.
+        - applied patch for encode_base64 issue, which trashes
+          the HTTP headers. Thanks to Michael Stapelberg for spotting.
+
 0.2     Fri Jul 24 14:40:48 CEST 2009
         - added note about encoding problems with XML::Atom.
         - added 'headers' field to constructor for additional http headers.
